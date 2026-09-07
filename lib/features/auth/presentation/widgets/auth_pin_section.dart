@@ -1,42 +1,69 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:safaricom_test/core/constants/app_colors.dart';
 import 'package:safaricom_test/core/constants/app_radii.dart';
 import 'package:safaricom_test/core/constants/app_spacing.dart';
 import 'package:safaricom_test/core/constants/app_text_styles.dart';
 import 'package:safaricom_test/core/widgets/primary_button.dart';
+import 'package:safaricom_test/features/auth/presentation/providers/auth_provider.dart';
 import 'package:safaricom_test/routes/app_routes.dart';
 
-class AuthPinSection extends StatefulWidget {
+class AuthPinSection extends ConsumerStatefulWidget {
   const AuthPinSection({super.key});
 
   @override
-  State<AuthPinSection> createState() => _AuthPinSectionState();
+  ConsumerState<AuthPinSection> createState() => _AuthPinSectionState();
 }
 
-class _AuthPinSectionState extends State<AuthPinSection> {
+class _AuthPinSectionState extends ConsumerState<AuthPinSection> {
   static const int _length = 4;
   String _pin = '';
 
   void _onDigit(String digit) {
+    if (ref.read(authControllerProvider).isLoading) return;
     if (_pin.length >= _length) return;
+    ref.read(authControllerProvider.notifier).clearError();
     setState(() => _pin += digit);
   }
 
   void _onBackspace() {
+    if (ref.read(authControllerProvider).isLoading) return;
     if (_pin.isEmpty) return;
+    ref.read(authControllerProvider.notifier).clearError();
     setState(() => _pin = _pin.substring(0, _pin.length - 1));
+  }
+
+  Future<void> _submit() async {
+    final ok = await ref.read(authControllerProvider.notifier).login(pin: _pin);
+    if (!ok || !mounted) return;
+    await Future<void>.delayed(const Duration(milliseconds: 450));
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, AppRoutes.home);
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authControllerProvider);
+
+    final hasError = auth.error != null;
+    final hasSuccess = auth.session != null;
+    final statusColor = hasError
+        ? AppColors.error
+        : hasSuccess
+            ? AppColors.success
+            : AppColors.secondary;
+
     return Column(
       children: [
-        const Row(
+        Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.lock_outline_rounded, color: AppColors.secondary, size: 22),
-            SizedBox(width: AppSpacing.sm),
-            Text('Enter Your M-PESA PIN', style: AppTextStyles.pinTitle),
+            Icon(Icons.lock_outline_rounded, color: statusColor, size: 22),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              'Enter Your M-PESA PIN',
+              style: AppTextStyles.pinTitle.copyWith(color: statusColor),
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -47,12 +74,25 @@ class _AuthPinSectionState extends State<AuthPinSection> {
               Expanded(
                 child: _PinBox(
                   filled: i < _pin.length,
-                  isActive: i == _pin.length,
+                  isActive: i == _pin.length && !auth.isLoading && !hasError && !hasSuccess,
+                  hasError: hasError,
+                  hasSuccess: hasSuccess,
                 ),
               ),
             ],
           ],
         ),
+        if (hasError || hasSuccess) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            hasError ? auth.error! : 'Login successful',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.caption.copyWith(
+              color: hasError ? AppColors.error : AppColors.success,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
         const SizedBox(height: AppSpacing.md),
         Expanded(
           child: Container(
@@ -74,12 +114,8 @@ class _AuthPinSectionState extends State<AuthPinSection> {
         const SizedBox(height: AppSpacing.md),
         PrimaryButton(
           label: 'Continue',
-          onPressed: _pin.length == _length
-              ? () => Navigator.pushReplacementNamed(
-                    context,
-                    AppRoutes.home,
-                  )
-              : null,
+          isLoading: auth.isLoading,
+          onPressed: _pin.length == _length && !auth.isLoading ? _submit : null,
         ),
         const SizedBox(height: AppSpacing.md),
         const _AuthFooter(),
@@ -89,28 +125,64 @@ class _AuthPinSectionState extends State<AuthPinSection> {
 }
 
 class _PinBox extends StatelessWidget {
-  const _PinBox({required this.filled, required this.isActive});
+  const _PinBox({
+    required this.filled,
+    required this.isActive,
+    required this.hasError,
+    required this.hasSuccess,
+  });
 
   final bool filled;
   final bool isActive;
+  final bool hasError;
+  final bool hasSuccess;
 
   @override
   Widget build(BuildContext context) {
+    final Color borderColor;
+    final double borderWidth;
+    final Color? fillTint;
+    final Color bulletColor;
+
+    if (hasError) {
+      borderColor = AppColors.error;
+      borderWidth = 2;
+      fillTint = AppColors.error.withValues(alpha: 0.06);
+      bulletColor = AppColors.error;
+    } else if (hasSuccess) {
+      borderColor = AppColors.success;
+      borderWidth = 2;
+      fillTint = AppColors.success.withValues(alpha: 0.06);
+      bulletColor = AppColors.success;
+    } else if (isActive) {
+      borderColor = AppColors.primary;
+      borderWidth = 2;
+      fillTint = AppColors.surface;
+      bulletColor = AppColors.textPrimary;
+    } else {
+      borderColor = AppColors.border;
+      borderWidth = 1;
+      fillTint = AppColors.surface;
+      bulletColor = AppColors.textPrimary;
+    }
+
     return Container(
       height: 64,
       margin: const EdgeInsets.symmetric(horizontal: 5),
-      // width: double.infinity,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: fillTint,
         borderRadius: BorderRadius.circular(AppRadii.md),
-        border: Border.all(
-          color: isActive ? AppColors.primary : AppColors.border,
-          width: isActive ? 2 : 1,
-        ),
+        border: Border.all(color: borderColor, width: borderWidth),
       ),
       child: filled
-          ? Text('•', style: AppTextStyles.heading1.copyWith(height: 1))
+          ? Text(
+              '•',
+              style: AppTextStyles.heading1.copyWith(
+                height: 1,
+                color: bulletColor,
+              ),
+            )
           : isActive
               ? const _PinCursor()
               : null,

@@ -10,32 +10,32 @@ class HomeServicesGrid extends StatelessWidget {
 
   static const _items = [
     _ServiceItem(
-      icon: Iconsax.shop,
+      icon: Iconsax.shop_copy,
       line1: 'Merchant',
       line2: 'payment',
     ),
     _ServiceItem(
-      icon: Iconsax.receipt_item,
+      icon: Iconsax.receipt_item_copy,
       line1: 'Bill',
       line2: 'payment',
     ),
     _ServiceItem(
-      icon: Iconsax.wallet_money,
+      icon: Iconsax.wallet_money_copy,
       line1: 'Credit &',
       line2: 'saving',
     ),
     _ServiceItem(
-      icon: Iconsax.money_send,
+      icon: Iconsax.money_send_copy,
       line1: 'Transfer',
       line2: 'money',
     ),
     _ServiceItem(
-      icon: Iconsax.simcard,
+      icon: Iconsax.simcard_copy,
       line1: 'Airtime/',
       line2: 'package',
     ),
     _ServiceItem(
-      icon: Iconsax.category_2,
+      icon: Iconsax.category_2_copy,
       line1: 'Macro',
       line2: 'services',
     ),
