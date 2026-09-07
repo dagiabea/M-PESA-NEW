@@ -6,8 +6,8 @@ import 'package:safaricom_test/features/splash/presentation/screens/splash_scree
 class AppRoutes {
   AppRoutes._();
 
-  static const String splash = '/splash';
-  static const String auth = '/';
+  static const String splash = '/';
+  static const String auth = '/auth';
   static const String home = '/home';
 
   static Map<String, WidgetBuilder> routes = {

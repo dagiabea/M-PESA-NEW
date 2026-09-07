@@ -11,7 +11,7 @@ class MyApp extends StatelessWidget {
       title: 'Safaricom',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      initialRoute: AppRoutes.auth,
+      initialRoute: AppRoutes.splash,
       routes: AppRoutes.routes,
     );
   }

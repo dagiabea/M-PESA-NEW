@@ -4,14 +4,16 @@ import 'package:flutter/material.dart';
 
 /// Circular heritage watermark used on M-PESA Ethiopia marketing.
 class AuthCardPattern extends StatelessWidget {
-  const AuthCardPattern({super.key});
+  const AuthCardPattern({super.key, this.size = 250});
+
+  final double size;
 
   @override
   Widget build(BuildContext context) {
-    return const IgnorePointer(
+    return IgnorePointer(
       child: CustomPaint(
-        size: Size.square(250),
-        painter: _HeritageMandalaPainter(),
+        size: Size.square(size),
+        painter: const _HeritageMandalaPainter(),
       ),
     );
   }

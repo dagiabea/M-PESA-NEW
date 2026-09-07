@@ -10,6 +10,7 @@ import 'package:safaricom_test/features/auth/presentation/providers/auth_provide
 import 'package:safaricom_test/features/auth/presentation/screens/auth_screen.dart';
 import 'package:safaricom_test/features/home/presentation/screens/home_screen.dart';
 import 'package:safaricom_test/features/home/presentation/widgets/home_scan_fab.dart';
+import 'package:safaricom_test/features/splash/presentation/screens/splash_screen.dart';
 
 class _FakeAuthRepository implements AuthRepository {
   @override
@@ -42,9 +43,16 @@ void main() {
     );
   }
 
-  testWidgets('app launches on the auth screen', (WidgetTester tester) async {
+  Future<void> pumpToAuth(WidgetTester tester) async {
     await tester.pumpWidget(app());
     await tester.pump();
+    expect(find.byType(SplashScreen), findsOneWidget);
+    await tester.pump(SplashScreen.displayDuration);
+    await tester.pump();
+  }
+
+  testWidgets('app launches on the splash screen then auth', (WidgetTester tester) async {
+    await pumpToAuth(tester);
 
     expect(find.byType(AuthScreen), findsOneWidget);
     expect(find.text('English'), findsOneWidget);
@@ -66,8 +74,7 @@ void main() {
   });
 
   testWidgets('language menu lists English and Amharic', (WidgetTester tester) async {
-    await tester.pumpWidget(app());
-    await tester.pump();
+    await pumpToAuth(tester);
 
     await tester.tap(find.text('English'));
     await tester.pump();
@@ -82,8 +89,7 @@ void main() {
   });
 
   testWidgets('wrong PIN shows an error', (WidgetTester tester) async {
-    await tester.pumpWidget(app());
-    await tester.pump();
+    await pumpToAuth(tester);
 
     for (var i = 0; i < 4; i++) {
       await tester.tap(find.text('2'));
@@ -99,8 +105,7 @@ void main() {
   });
 
   testWidgets('continue after PIN opens the home screen', (WidgetTester tester) async {
-    await tester.pumpWidget(app());
-    await tester.pump();
+    await pumpToAuth(tester);
 
     for (var i = 0; i < 4; i++) {
       await tester.tap(find.text('1'));
